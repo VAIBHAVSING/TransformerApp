@@ -25,16 +25,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'Frontend/backend/package-lock.json'
+          cache-dependency-path: 'backend/package-lock.json'
       
       - name: Install Backend Dependencies
         run: |
-          cd Frontend/backend
+          cd backend
           npm ci
       
       - name: Run Backend Tests
         run: |
-          cd Frontend/backend
+          cd backend
           npm test
         env:
           MONGODB_URI: mongodb://localhost:27017/transformerAppTest
@@ -51,21 +51,18 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'Frontend/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
       
       - name: Install Frontend Dependencies
         run: |
-          cd Frontend
           npm ci
       
       - name: Build Frontend
         run: |
-          cd Frontend
           npm run build
       
       - name: Run Frontend Tests
         run: |
-          cd Frontend
           npm test -- --passWithNoTests
   
   build-and-push:
@@ -88,14 +85,14 @@ jobs:
       - name: Build and push Backend Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./Frontend/backend
+          context: ./backend
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/transformer-backend:latest
       
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./Frontend
+          context: .
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/transformer-frontend:latest
   
