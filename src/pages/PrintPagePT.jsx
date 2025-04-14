@@ -1,122 +1,133 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const PrintPagePT = () => {
-  const [data, setData] = useState({
+  const [outputData, setOutputData] = useState({
     type: '',
-    voltRat: '',
+    voltageRating: '',
     burden: '',
-    classType: '',
+    class: '',
     stc: '',
-    cross: '',
-    wirelen: '',
+    crossSection: '',
+    wireLength: '',
     insulationOnCore: '',
     numOfLayers: ''
   });
 
+  const [isPrinted, setIsPrinted] = useState(false);
+
   useEffect(() => {
-    // In a real application, these values would be calculated based on the input
-    // For now, we'll just simulate the values with some placeholder calculations
-    const type = localStorage.getItem('Type') || '';
-    const voltRat = localStorage.getItem('VoltRat') || '';
-    const burden = localStorage.getItem('Burden') || '';
-    const classType = localStorage.getItem('ClassType') || '';
-    const stc = localStorage.getItem('STC') || '';
-    
-    // Dummy calculations for demonstration
-    const cross = (parseFloat(voltRat) * 0.4).toFixed(2);
-    const wirelen = (parseFloat(burden) * 0.15).toFixed(2);
-    const insulationOnCore = Math.round(parseFloat(voltRat) * 0.4);
-    const numOfLayers = Math.round(parseFloat(burden) / 10);
-    
-    setData({
-      type,
-      voltRat,
-      burden,
-      classType,
-      stc,
-      cross,
-      wirelen,
-      insulationOnCore,
-      numOfLayers
-    });
+    // Get the data passed from the previous page
+    const data = JSON.parse(localStorage.getItem('ptOutputData'));
+    if (data) {
+      setOutputData(data);
+    }
   }, []);
 
   const handlePrint = () => {
     window.print();
+    setIsPrinted(true);
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <div className="print:hidden">
         <Navbar isLoggedIn={true} />
       </div>
       
-      <div className="w-[210mm] mx-auto bg-white p-8 shadow-lg print:shadow-none">
-        <h1 className="text-4xl font-bold text-center mb-6">Design Sheet</h1>
-        <h3 className="text-xl font-medium text-center mb-6">
-          Electrical Supply: {data.voltRat} KV PT {data.type}
-        </h3>
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center print:hidden">
+          <h2 className="text-3xl font-bold mb-8 text-center">
+            <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
+              Potential Transformer Output
+            </span>
+          </h2>
+        </div>
         
-        <table className="w-[158mm] mx-auto mb-8 border border-black">
-          <tbody className="bg-blue-100">
-            <tr className="h-12">
-              <td className="border border-black text-center p-2">
-                <p className="text-center">Burden: {data.burden} VA</p>
-              </td>
-            </tr>
-            <tr className="h-12">
-              <td className="border border-black text-center p-2">
-                <p className="text-center">Class: {data.classType}</p>
-              </td>
-            </tr>
-            <tr className="h-12">
-              <td className="border border-black text-center p-2">
-                <p className="text-center">STC: {data.stc} KA/1sec</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <table className="w-[158mm] mx-auto border border-black">
-          <tbody className="bg-blue-100">
-            <tr className="h-20">
-              <td className="border border-black p-3 w-[10%]">1</td>
-              <td className="border border-black p-3 w-[50%]">Cross Section Area</td>
-              <td className="border border-black p-3 w-[40%]">{data.cross} sq. mm</td>
-            </tr>
-            <tr className="h-20">
-              <td className="border border-black p-3">2</td>
-              <td className="border border-black p-3">Width of Wire</td>
-              <td className="border border-black p-3">{data.wirelen} mm</td>
-            </tr>
-            <tr className="h-20">
-              <td className="border border-black p-3">3</td>
-              <td className="border border-black p-3">Insulation On Core</td>
-              <td className="border border-black p-3">{data.insulationOnCore} Layers of Crepe Paper</td>
-            </tr>
-            <tr className="h-20">
-              <td className="border border-black p-3">4</td>
-              <td className="border border-black p-3">Number of Layers</td>
-              <td className="border border-black p-3">{data.numOfLayers} Layers</td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div className="flex justify-center mt-8 print:hidden">
-          <button 
-            onClick={handlePrint}
-            className="px-6 py-2 bg-gradient-to-t from-green-700 to-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300"
-          >
-            Print
-          </button>
-          <Link
-            to="/dashboard"
-            className="ml-4 px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition duration-300"
-          >
-            Back to Dashboard
-          </Link>
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-6">TransformerGo</h1>
+            <h2 className="text-2xl mb-8">Potential Transformer Specifications</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Type:</span>
+                <span>{outputData.type}</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Voltage Rating:</span>
+                <span>{outputData.voltageRating} kV</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Burden:</span>
+                <span>{outputData.burden} VA</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Class:</span>
+                <span>{outputData.class}</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Short Time Current:</span>
+                <span>{outputData.stc} kA/sec</span>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Cross Section Area:</span>
+                <span>{outputData.crossSection} sq. mm</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Wire Width:</span>
+                <span>{outputData.wireLength} mm</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Insulation on Core:</span>
+                <span>{outputData.insulationOnCore} Layers of Crepe Paper</span>
+              </div>
+              
+              <div className="border-b pb-2">
+                <span className="font-bold mr-2">Number of Layers:</span>
+                <span>{outputData.numOfLayers} Layers</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-8">
+            <div className="text-center text-gray-600">
+              <p className="text-sm">*This document is computer-generated and serves for reference purposes only.</p>
+              <p className="text-sm">*Generated on {new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+          
+          <div className="mt-8 flex justify-center space-x-4 print:hidden">
+            {!isPrinted ? (
+              <button
+                onClick={handlePrint}
+                className="px-6 py-3 rounded bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+              >
+                Print Document
+              </button>
+            ) : (
+              <p className="text-green-600 font-medium">Document printed successfully!</p>
+            )}
+            
+            <Link
+              to="/input-pt"
+              className="px-6 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Back to Inputs
+            </Link>
+          </div>
         </div>
       </div>
     </div>

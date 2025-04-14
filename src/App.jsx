@@ -13,6 +13,8 @@ import InputCTPage from './pages/InputCTPage';
 import InputPTPage from './pages/InputPTPage';
 import PrintPageCT from './pages/PrintPageCT';
 import PrintPagePT from './pages/PrintPagePT';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Create and export the auth context
 export const AuthContext = React.createContext();
@@ -112,6 +114,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* Protected routes */}
           <Route 

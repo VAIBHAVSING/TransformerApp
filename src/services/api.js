@@ -66,6 +66,41 @@ export const authService = {
   // Check if user is authenticated
   isAuthenticated: () => {
     return !!localStorage.getItem('userToken');
+  },
+
+  // Request password reset OTP
+  forgotPassword: async (email) => {
+    try {
+      const response = await api.post('/user/forgotPassword', { email });
+      return {
+        success: true,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to send reset OTP'
+      };
+    }
+  },
+
+  // Reset password with OTP
+  resetPassword: async (data) => {
+    try {
+      const response = await api.post('/user/resetPassword', data);
+      if (response.data.token) {
+        localStorage.setItem('userToken', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+      return {
+        success: true
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to reset password'
+      };
+    }
   }
 };
 
