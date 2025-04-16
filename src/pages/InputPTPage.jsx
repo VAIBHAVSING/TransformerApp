@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { CheckCircle, BarChart3 } from "lucide-react";
 
 const InputPTPage = () => {
   const navigate = useNavigate();
@@ -41,8 +42,8 @@ const InputPTPage = () => {
 
   const calculateForPT = () => {
     // Validate form first
-    if (!formData.type || !formData.burden || !formData.voltageRating || 
-        !formData.class || !formData.stc) {
+    if (!formData.type || !formData.burden || !formData.voltageRating ||
+      !formData.class || !formData.stc) {
       alert('Please fill all fields');
       return;
     }
@@ -101,21 +102,65 @@ const InputPTPage = () => {
       numOfLayers: numOfLayers
     }));
   };
-  
-  const predictErrors = () => {
+
+  const predictErrors = async () => {
     setIsLoading(true);
-    
-    // Simulate running the model
-    setTimeout(() => {
+
+    // Ensure that the outputData is recalculated before sending the data
+    calculateForPT();  // This will recalculate the outputData
+
+    // Prepare data to send to the API
+    const payload = {
+      formData: {
+        type: formData.type,
+        burden: formData.burden,
+        voltageRating: formData.voltageRating,
+        class: formData.class,
+        stc: formData.stc
+      },
+      outputData: {
+        crossSection: outputData.crossSection,  // Calculated in 'calculateForPT'
+        wireLength: outputData.wireLength,
+        insulationOnCore: outputData.insulationOnCore,
+        numOfLayers: outputData.numOfLayers
+      }
+    };
+
+    try {
+      // Make API call to Flask backend
+      const response = await fetch('http://127.0.0.1:5000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      // Get the response JSON
+      const data = await response.json();
+
+      // Update output with the prediction results
+      setOutputData((prevOutputData) => ({
+        ...prevOutputData,
+        predictionResults: data  // The returned model prediction results
+      }));
+
       setIsLoading(false);
       setShowOutput(true);
-    }, 2000);
+
+    } catch (error) {
+      console.error('Error predicting errors:', error);
+      setIsLoading(false);
+      alert('Error predicting errors. Please try again.');
+    }
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar isLoggedIn={true} />
-      
+
       <div className="container mx-auto py-8 px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-8 text-center">
@@ -124,7 +169,7 @@ const InputPTPage = () => {
             </span>
           </h2>
         </div>
-        
+
         <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
           <div className="mb-8">
             <div className="flex gap-6">
@@ -141,7 +186,7 @@ const InputPTPage = () => {
                 />
                 <label htmlFor="t1" className="text-lg">Oil Cooled</label>
               </div>
-              
+
               <div className="flex items-center">
                 <input
                   type="radio"
@@ -157,7 +202,7 @@ const InputPTPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="mb-6">
             <label htmlFor="burden" className="block text-lg font-medium mb-2">
               Burden
@@ -181,7 +226,7 @@ const InputPTPage = () => {
               <option value="100">100 VA</option>
             </select>
           </div>
-          
+
           <div className="mb-6">
             <label htmlFor="voltage-rating" className="block text-lg font-medium mb-2">
               Voltage Rating
@@ -200,7 +245,7 @@ const InputPTPage = () => {
               <option value="33">33 kV</option>
             </select>
           </div>
-          
+
           <div className="mb-6">
             <label htmlFor="class-type" className="block text-lg font-medium mb-2">
               Class
@@ -224,7 +269,7 @@ const InputPTPage = () => {
               <option value="0.5S">0.5S</option>
             </select>
           </div>
-          
+
           <div className="mb-6">
             <label htmlFor="stc" className="block text-lg font-medium mb-2">
               Short Time Current
@@ -245,7 +290,7 @@ const InputPTPage = () => {
               <option value="31.1">31.1 kA/sec</option>
             </select>
           </div>
-          
+
           <div className="flex gap-4 mt-8 justify-center">
             <Link
               to="/"
@@ -253,7 +298,7 @@ const InputPTPage = () => {
             >
               Back
             </Link>
-            
+
             <button
               type="button"
               onClick={calculateForPT}
@@ -263,7 +308,7 @@ const InputPTPage = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="mt-6 text-center">
           <button
             id="open-page-btn1"
@@ -273,7 +318,7 @@ const InputPTPage = () => {
             Predict Errors
           </button>
         </div>
-        
+
         {isLoading && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-5 rounded-lg">
@@ -281,23 +326,24 @@ const InputPTPage = () => {
             </div>
           </div>
         )}
-        
+
         {showOutput && (
           <div className="flex flex-col md:flex-row gap-6 mt-10">
+            {/* Output Section */}
             <div className="w-full md:w-1/2">
-              <div className="bg-white p-8 rounded-lg shadow-md">
+              <div className="bg-white p-8 rounded-lg shadow-lg border border-green-100 hover:shadow-xl transition duration-300">
                 <h2 className="text-2xl font-bold mb-4 text-center">
                   <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
                     Output for Potential Transformer
                   </span>
                 </h2>
-                
-                <div className="space-y-4">
-                  <p className="text-lg" id="crosssection">{outputData.crossSection}</p>
-                  <p className="text-lg" id="wirelength">{outputData.wireLength}</p>
-                  <p className="text-lg" id="insulationOnCore">{outputData.insulationOnCore}</p>
-                  <p className="text-lg" id="noOfLayers">{outputData.numOfLayers}</p>
-                  
+
+                <div className="space-y-4 text-gray-800 text-lg font-medium">
+                  <p id="crosssection">• {outputData.crossSection}</p>
+                  <p id="wirelength">• {outputData.wireLength}</p>
+                  <p id="insulationOnCore">• {outputData.insulationOnCore}</p>
+                  <p id="noOfLayers">• {outputData.numOfLayers}</p>
+
                   <div className="mt-6 text-center">
                     <Link
                       to="/print-page-pt"
@@ -310,7 +356,45 @@ const InputPTPage = () => {
                 </div>
               </div>
             </div>
-            
+
+            {/* Prediction Results */}
+            {outputData.predictionResults && (
+              <div className="w-full md:w-1/2">
+                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 hover:shadow-2xl transition duration-300 ease-in-out">
+                  <h2 className="text-3xl font-extrabold mb-6 text-center bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
+                    Model Prediction Results
+                  </h2>
+
+                  <div className="space-y-4 text-gray-800 text-lg font-medium">
+                    <p>
+                      <span className="text-green-600 font-semibold">Ratio 100 Error 120:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Ratio100Error120).toFixed(2)}
+                    </p>
+                    <p>
+                      <span className="text-green-600 font-semibold">Ratio 100 Error 100:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Ratio100Error100).toFixed(2)}
+                    </p>
+                    <p>
+                      <span className="text-green-600 font-semibold">Ratio 100 Error 80:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Ratio100Error80).toFixed(2)}
+                    </p>
+                    <p>
+                      <span className="text-blue-600 font-semibold">Phase 100 Error 120:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Phase100Error120).toFixed(2)}
+                    </p>
+                    <p>
+                      <span className="text-blue-600 font-semibold">Phase 100 Error 100:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Phase100Error100).toFixed(2)}
+                    </p>
+                    <p>
+                      <span className="text-blue-600 font-semibold">Phase 100 Error 80:</span>{' '}
+                      {parseFloat(outputData.predictionResults.Phase100Error80).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {showModel && (
               <div className="w-full md:w-1/2">
                 <div className="bg-white p-8 rounded-lg shadow-md">
@@ -319,30 +403,30 @@ const InputPTPage = () => {
                       3D Model - {modelType === 'Oil Cooled' ? 'oil cooled' : 'epoxy dry'}
                     </span>
                   </h2>
-                  
+
                   <div className="sketchfab-embed-wrapper">
-                    <iframe 
-                      title={modelType === 'Oil Cooled' ? 'Oil Cooled with Dimensions' : 'Epoxy Transformer with Dimensions'} 
-                      width="100%" 
-                      height="500" 
-                      frameBorder="0" 
-                      allowFullScreen 
-                      mozallowfullscreen="true" 
+                    <iframe
+                      title={modelType === 'Oil Cooled' ? 'Oil Cooled with Dimensions' : 'Epoxy Transformer with Dimensions'}
+                      width="100%"
+                      height="500"
+                      frameBorder="0"
+                      allowFullScreen
+                      mozallowfullscreen="true"
                       webkitallowfullscreen="true"
-                      allow="autoplay; fullscreen; xr-spatial-tracking" 
+                      allow="autoplay; fullscreen; xr-spatial-tracking"
                       xr-spatial-tracking="true"
-                      src={modelType === 'Oil Cooled' 
-                        ? "https://sketchfab.com/models/24bdbf43519840f691e3ace4fae233f5/embed" 
+                      src={modelType === 'Oil Cooled'
+                        ? "https://sketchfab.com/models/24bdbf43519840f691e3ace4fae233f5/embed"
                         : "https://sketchfab.com/models/2d1e67715d15453996afa9cbea8ff6f5/embed"
                       }
                     />
                     <p className="text-sm text-gray-500 mt-2">
-                      <a 
-                        href={modelType === 'Oil Cooled' 
-                          ? "https://sketchfab.com/3d-models/oil-cooled-with-dimensions-24bdbf43519840f691e3ace4fae233f5" 
+                      <a
+                        href={modelType === 'Oil Cooled'
+                          ? "https://sketchfab.com/3d-models/oil-cooled-with-dimensions-24bdbf43519840f691e3ace4fae233f5"
                           : "https://sketchfab.com/3d-models/epoxy-transformer-with-dimensions-2d1e67715d15453996afa9cbea8ff6f5"
-                        } 
-                        target="_blank" 
+                        }
+                        target="_blank"
                         rel="nofollow"
                         className="font-bold text-green-600 hover:text-green-500"
                       >
