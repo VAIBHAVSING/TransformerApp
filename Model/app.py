@@ -7,7 +7,9 @@ import pandas as pd
 app = Flask(__name__)
 
 # Load the pre-trained model
-model = joblib.load('pt_error_predictor.pkl')
+pt_model = joblib.load('pt_error_predictor.pkl')
+ct_model = joblib.load("ct_error_predictor_model_all_outputs.joblib")
+
 
 # Enable CORS (Cross-Origin Resource Sharing) to allow access from frontend apps
 CORS(app)
@@ -67,7 +69,7 @@ def prepare_model_input(form_data, output_data):
 
 
 
-# Prediction route
+# Prediction route for /predict
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
@@ -89,7 +91,7 @@ def predict():
         input_df = pd.DataFrame([model_input])
 
         # Get the model prediction
-        prediction = model.predict(input_df)[0]
+        prediction = pt_model.predict(input_df)[0]
 
         # Return the prediction results as a JSON response
         return jsonify({
@@ -105,6 +107,130 @@ def predict():
         # If there's any error, return a 500 error with the error message
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
-# Run the Flask app
+def extract_ratio_numerator(ratio_str):
+    try:
+        # Replace ":" with "/" if needed
+        ratio_str = ratio_str.replace(":", "/")
+        parts = ratio_str.split("/")
+        return float(parts[0]) if len(parts) == 2 else float(ratio_str)
+    except Exception:
+        raise ValueError(f"Invalid ctRatio format: {ratio_str}")
+    
+    
+
+def calculate_derived_inputs(form_data):
+    try:
+        required_keys = ['type', 'class', 'voltageRating', 'ctRatio', 'burden', 'stc']
+        for key in required_keys:
+            if key not in form_data:
+                raise ValueError(f"Missing required field: {key}")
+
+        type_value = form_data['type'].lower()
+        type1 = 1 if "t/b" in type_value else 0
+        type2 = 1 if "oil" in type_value else 0
+
+        class_map = {
+            "0.2": 0.2, "0.5": 0.5, "1": 1.0, "3": 3.0
+        }
+        class_val = class_map.get(str(form_data["class"]).strip(), 0.5)
+
+        try:
+            voltage_rating = float(form_data["voltageRating"])
+        except ValueError:
+            raise ValueError("Invalid voltage rating. Must be a numeric value.")
+
+        bdv_oil = 30 if type2 == 1 else 20
+        ptos = 1000 + voltage_rating * 10
+        ptoe = 500 + voltage_rating * 5
+        stoe = 600 + voltage_rating * 4
+
+        return {
+            "CTRatio": extract_ratio_numerator(form_data["ctRatio"]),
+            "Burden": form_data["burden"],
+            "STC": form_data["stc"],
+            "Type1": type1,
+            "Type2": type2,
+            "class": class_val,
+            "BDVOil": bdv_oil,
+            "PrimarytoSecondary": ptos,
+            "PrimarytoEarth": ptoe,
+            "SecondarytoEarth": stoe
+        }
+
+    except Exception as e:
+        raise ValueError(f"Error in calculating derived inputs: {e}")
+
+# Prediction route for /predict_ct (renamed the function to avoid conflict)
+# Prediction route for /predict_ct
+@app.route('/predict_ct', methods=['POST'])
+def predict_ct():
+    try:
+        data = request.get_json()
+
+        form_data = {
+            "type": data.get("type"),
+            "burden": float(data.get("burden")),
+            "voltageRating": float(data.get("voltageRating")),
+            "class": data.get("class"),
+            "ctRatio": data.get("ctRatio"),
+            "stc": float(data.get("stc"))
+        }
+
+        # Calculate derived inputs
+        derived_inputs = calculate_derived_inputs(form_data)
+
+        features = [
+            float(derived_inputs['CTRatio']),
+            float(derived_inputs['Burden']),
+            float(derived_inputs['STC']),
+            float(derived_inputs['Type1']),
+            float(derived_inputs['Type2']),
+            float(derived_inputs['class']),
+            float(derived_inputs['BDVOil']),
+            float(derived_inputs['PrimarytoSecondary']),
+            float(derived_inputs['PrimarytoEarth']),
+            float(derived_inputs['SecondarytoEarth']),
+        ]
+
+        # Define column names expected by the model
+        columns = [
+            "CTRatio", "Burden", "STC", "Type1", "Type2", "class",
+            "BDVOil", "PrimarytoSecondary", "PrimarytoEarth", "SecondarytoEarth"
+        ]
+
+        # Create DataFrame with appropriate column names
+        input_df = pd.DataFrame([features], columns=columns)
+
+        # Predict using the ct_model
+        raw_prediction = ct_model.predict(input_df)
+
+        # Log the raw prediction output to check if any data is missing
+        # print("Raw Prediction:", raw_prediction)
+
+        # Ensure prediction has 20 outputs (even if the model only outputs fewer values)
+        prediction = list(raw_prediction[0]) + [None] * (20 - len(raw_prediction[0]))
+
+        output_keys = [
+            "Ratio100Error120", "Ratio100Error100", "Ratio100Error20",
+            "Ratio100Error5", "Ratio100Error1", "Phase100Error120",
+            "Phase100Error100", "Phase100Error20", "Phase100Error5",
+            "Phase100Error1", "Ratio25Error120", "Ratio25Error100",
+            "Ratio25Error20", "Ratio25Error5", "Ratio25Error1",
+            "Phase25Error120", "Phase25Error100", "Phase25Error20",
+            "Phase25Error5", "Phase25Error1"
+        ]
+
+        # Map the model's prediction to the output keys
+        output = dict(zip(output_keys, [float(x) if x is not None else None for x in prediction]))
+
+        # print("Mapped Prediction Output:", output)
+
+        return jsonify(output)
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+# Run the app
 if __name__ == '__main__':
     app.run(debug=True)
