@@ -1,22 +1,21 @@
 FROM node:18-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json (if available) first to leverage Docker caching
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --production
+RUN npm install
 
-# Copy rest of the application code
+# Copy the rest of the application code
 COPY . .
 
-# Set environment variables
+# Environment variables
 ENV NODE_ENV=production
-ENV PORT=5000
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 3000
 
 # Command to run the application
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
