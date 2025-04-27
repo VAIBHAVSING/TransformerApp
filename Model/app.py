@@ -7,13 +7,13 @@ import os
 # Initialize the Flask app
 app = Flask(__name__)
 
-# Enhanced CORS configuration
-# Set environment variable for controlling CORS settings
-CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
-CORS(app, resources={r"/*": {"origins": CORS_ORIGIN, 
-                            "allow_headers": ["Content-Type", "Authorization"],
-                            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                            "supports_credentials": True}})
+# Enhanced CORS configuration - allow all origins
+CORS(app, resources={r"/*": {
+    "origins": "*", 
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    "supports_credentials": True
+}})
 
 # Load the pre-trained model
 pt_model = joblib.load('pt_error_predictor.pkl')
