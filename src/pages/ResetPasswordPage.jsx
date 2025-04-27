@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
@@ -12,6 +12,21 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check if OTP was requested
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('resetEmail');
+    const otpSent = localStorage.getItem('otpSent');
+    
+    if (storedEmail) {
+      setEmail(storedEmail);
+    }
+    
+    if (!otpSent) {
+      toast.warning('Please request an OTP first');
+      navigate('/forgot-password');
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,6 +54,15 @@ const ResetPasswordPage = () => {
       setIsLoading(false);
       return;
     }
+
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      setError("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      toast.error("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Show loading toast
@@ -54,8 +78,12 @@ const ResetPasswordPage = () => {
       toast.dismiss(loadingToastId);
       
       if (result.success) {
-        toast.success("Password reset successfully!");
-        navigate('/dashboard');
+        // Clear reset process data
+        localStorage.removeItem('resetEmail');
+        localStorage.removeItem('otpSent');
+        
+        toast.success("Password reset successfully! You can now log in with your new password.");
+        navigate('/login');
       } else {
         setError(result.error || 'Password reset failed. Please try again.');
         toast.error(result.error || 'Password reset failed. Please try again.');
@@ -112,7 +140,8 @@ const ResetPasswordPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={!!localStorage.getItem('resetEmail')}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-500"
                   placeholder="Enter your registered email"
                 />
               </div>
@@ -129,7 +158,7 @@ const ResetPasswordPage = () => {
                   id="otp" 
                   name="otp"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                   required
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter 6-digit OTP from your email"
@@ -154,7 +183,7 @@ const ResetPasswordPage = () => {
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter new password"
                 />
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
+                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters with uppercase, lowercase, and number</p>
               </div>
               
               <div className="mb-6">

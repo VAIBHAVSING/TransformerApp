@@ -1,14 +1,21 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import { authService } from '../services/api';
 
 const ForgotPasswordPage = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  // Clear any previous reset attempt data when component loads
+  useEffect(() => {
+    localStorage.removeItem('resetEmail');
+    localStorage.removeItem('otpSent');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +39,10 @@ const ForgotPasswordPage = () => {
       toast.dismiss(loadingToastId);
       
       if (result.success) {
+        // Store email for the reset password page
+        localStorage.setItem('resetEmail', email);
+        localStorage.setItem('otpSent', 'true');
+        
         setIsSubmitted(true);
         toast.success("OTP has been sent to your email!");
       } else {
@@ -45,6 +56,10 @@ const ForgotPasswordPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNavigateToReset = () => {
+    navigate('/reset-password');
   };
 
   return (
@@ -78,19 +93,19 @@ const ForgotPasswordPage = () => {
             {isSubmitted ? (
               <div className="bg-white p-8 rounded-lg shadow-md">
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-                  <p>We've sent an OTP to your email.</p>
+                  <p>We've sent an OTP to {email}</p>
                 </div>
                 
                 <p className="text-gray-600 mb-4">
                   Please check your email for a 6-digit OTP code. Use this code to reset your password.
                 </p>
                 
-                <Link 
-                  to="/reset-password" 
+                <button 
+                  onClick={handleNavigateToReset}
                   className="w-full block text-center py-3 bg-gradient-to-t from-green-700 to-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300"
                 >
                   Enter OTP to Reset Password
-                </Link>
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md">

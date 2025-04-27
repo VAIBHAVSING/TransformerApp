@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User.js';
 import { sendEmail } from '../Utils/emailService.js';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 // Helper function to create JWT token
 const signToken = (id) => {
@@ -142,7 +143,7 @@ export const forgotPassword = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
     
     // 3) Set OTP and expiration time (10 minutes)
-    user.resetPasswordOTP = await bcrypt.hash(otp, 8); // Hash OTP for security
+    user.resetPasswordOTP = await bcrypt.hash(otp, 12);
     user.resetPasswordOTPExpires = Date.now() + 10 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
@@ -170,12 +171,15 @@ export const forgotPassword = async (req, res) => {
       user.resetPasswordOTPExpires = undefined;
       await user.save({ validateBeforeSave: false });
 
+      console.error('Email sending error:', err);
+      
       return res.status(500).json({
         status: 'error',
         message: 'There was an error sending the email. Try again later!'
       });
     }
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
