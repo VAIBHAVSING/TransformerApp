@@ -2,17 +2,22 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import pandas as pd
+import os
 
 # Initialize the Flask app
 app = Flask(__name__)
 
+# Enhanced CORS configuration
+# Set environment variable for controlling CORS settings
+CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
+CORS(app, resources={r"/*": {"origins": CORS_ORIGIN, 
+                            "allow_headers": ["Content-Type", "Authorization"],
+                            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                            "supports_credentials": True}})
+
 # Load the pre-trained model
 pt_model = joblib.load('pt_error_predictor.pkl')
 ct_model = joblib.load("ct_error_predictor_model_all_outputs.joblib")
-
-
-# Enable CORS (Cross-Origin Resource Sharing) to allow access from frontend apps
-CORS(app)
 
 import re
 
