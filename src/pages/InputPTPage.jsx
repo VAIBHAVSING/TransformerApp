@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { CheckCircle, BarChart3 } from "lucide-react";
+import { modelService } from '../services/api';
 
 const InputPTPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     type: '',
     burden: '',
@@ -24,6 +26,7 @@ const InputPTPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showModel, setShowModel] = useState(false);
   const [modelType, setModelType] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleTypeChange = (e) => {
     setFormData({
@@ -103,59 +106,156 @@ const InputPTPage = () => {
     }));
   };
 
-  const predictErrors = async () => {
+  const calculateAndPredict = async () => {
+    if (!formData.type || !formData.burden || !formData.voltageRating ||
+      !formData.class || !formData.stc) {
+      alert('Please fill all fields');
+      return;
+    }
+
     setIsLoading(true);
+    
+    // First calculate the PT outputs
+    const burden = parseInt(formData.burden);
+    const voltageRating = parseInt(formData.voltageRating);
+    const stc = parseFloat(formData.stc);
 
-    // Ensure that the outputData is recalculated before sending the data
-    calculateForPT();  // This will recalculate the outputData
+    // Calculations based on original JS_Computation.js
+    const crossection = (stc * 1000) / 180;
 
-    // Prepare data to send to the API
+    // Determine wire length based on burden
+    let wirelength;
+    if (burden <= 60) {
+      wirelength = 85;
+    } else if (burden <= 90) {
+      wirelength = 70;
+    } else {
+      wirelength = 50;
+    }
+
+    // Constants
+    const insulationOnCore = 3; // kV
+    const numOfLayers = 6;
+
+    // Format output strings the same way as original code
+    const crossSectionStr = `Cross Section Area = ${(Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100)} sq. mm`;
+    const wireLengthStr = `Width of Wire = ${wirelength} mm`;
+    const insulationOnCoreStr = `Layers on Core = ${(Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100)} Layers of Crepe Paper`;
+    const numOfLayersStr = `Number of Layers = ${numOfLayers} Layers`;
+
+    // Update output data first so it's available for the API call
+    setOutputData({
+      crossSection: crossSectionStr,
+      wireLength: wireLengthStr,
+      insulationOnCore: insulationOnCoreStr,
+      numOfLayers: numOfLayersStr
+    });
+
+    // Prepare payload for API
     const payload = {
       formData: {
         type: formData.type,
         burden: formData.burden,
-        voltageRating: formData.voltageRating,
         class: formData.class,
         stc: formData.stc
       },
       outputData: {
-        crossSection: outputData.crossSection,  // Calculated in 'calculateForPT'
-        wireLength: outputData.wireLength,
-        insulationOnCore: outputData.insulationOnCore,
-        numOfLayers: outputData.numOfLayers
+        crossSection: (Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100),
+        wireLength: wirelength,
+        insulationOnCore: (Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100),
+        numOfLayers: numOfLayers
       }
     };
 
     try {
-      // Make API call to Flask backend
-      const response = await fetch(`${import.meta.env.VITE_Model_API_URL}/predict`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      // Use the modelService instead of direct fetch
+      const result = await modelService.predictPT(payload);
+      
+      if (result.success) {
+        // Update output with the prediction results
+        setOutputData(prevData => ({
+          crossSection: crossSectionStr,
+          wireLength: wireLengthStr,
+          insulationOnCore: insulationOnCoreStr,
+          numOfLayers: numOfLayersStr,
+          predictionResults: result.data
+        }));
 
-      // Get the response JSON
-      const data = await response.json();
-
-      // Update output with the prediction results
-      setOutputData((prevOutputData) => ({
-        ...prevOutputData,
-        predictionResults: data  // The returned model prediction results
-      }));
-
-      setIsLoading(false);
-      setShowOutput(true);
-
+        setShowOutput(true);
+        setShowModel(true);
+        setModelType(formData.type);
+        
+        // Save for printing
+        localStorage.setItem('ptOutputData', JSON.stringify({
+          type: formData.type,
+          voltageRating: voltageRating,
+          burden: burden,
+          class: formData.class,
+          stc: stc,
+          crossSection: (Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100),
+          wireLength: wirelength,
+          insulationOnCore: (Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100),
+          numOfLayers: numOfLayers
+        }));
+      } else {
+        console.error('Error predicting errors:', result.error);
+        
+        // If unauthorized (401), redirect to login
+        if (result.error === 'You are not logged in! Please log in to get access.') {
+          navigate('/login', { state: { from: location.pathname, message: 'Please log in to use the prediction feature' } });
+          return;
+        }
+        
+        // Handle other errors
+        setErrorMessage(result.error || 'Failed to get prediction results. Please try again.');
+      }
     } catch (error) {
       console.error('Error predicting errors:', error);
+      setErrorMessage('Failed to connect to the server. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
-      alert('Error predicting errors. Please try again.');
     }
   };
 
+  const handlePrintClick = () => {
+    // Recalculate and save data before navigating
+    const burden = parseInt(formData.burden);
+    const voltageRating = parseInt(formData.voltageRating);
+    const stc = parseFloat(formData.stc);
+    
+    // Calculations based on original JS_Computation.js
+    const crossection = (stc * 1000) / 180;
 
+    // Determine wire length based on burden
+    let wirelength;
+    if (burden <= 60) {
+      wirelength = 85;
+    } else if (burden <= 90) {
+      wirelength = 70;
+    } else {
+      wirelength = 50;
+    }
+
+    // Constants
+    const insulationOnCore = 3; // kV
+    const numOfLayers = 6;
+    
+    // Save data to localStorage before navigation
+    localStorage.setItem('ptOutputData', JSON.stringify({
+      type: formData.type,
+      voltageRating: voltageRating,
+      burden: burden,
+      class: formData.class,
+      stc: stc,
+      crossSection: (Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100),
+      wireLength: wirelength,
+      insulationOnCore: (Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100),
+      numOfLayers: numOfLayers
+    }));
+    
+    // Navigate to the correct route defined in App.jsx
+    navigate('/pt-results');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -313,7 +413,7 @@ const InputPTPage = () => {
           <button
             id="open-page-btn1"
             className="px-6 py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300"
-            onClick={predictErrors}
+            onClick={calculateAndPredict}
           >
             Predict Errors
           </button>
@@ -345,13 +445,13 @@ const InputPTPage = () => {
                   <p id="noOfLayers">• {outputData.numOfLayers}</p>
 
                   <div className="mt-6 text-center">
-                    <Link
-                      to="/print-page-pt"
+                    <button
+                      onClick={handlePrintClick}
                       id="printbtn"
                       className="px-6 py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300 inline-block"
                     >
                       Print
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -360,36 +460,70 @@ const InputPTPage = () => {
             {/* Prediction Results */}
             {outputData.predictionResults && (
               <div className="w-full md:w-1/2">
-                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 hover:shadow-2xl transition duration-300 ease-in-out">
-                  <h2 className="text-3xl font-extrabold mb-6 text-center bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
-                    Model Prediction Results
-                  </h2>
+                <div className="bg-gradient-to-br from-white to-green-50 p-8 rounded-2xl shadow-xl border border-green-100 hover:shadow-2xl transition-all duration-500 ease-in-out transform hover:-translate-y-1">
+                  <div className="flex items-center justify-center mb-6">
+                    <BarChart3 className="text-green-600 w-7 h-7 mr-3" />
+                    <h2 className="text-3xl font-extrabold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
+                      Model Prediction Results
+                    </h2>
+                  </div>
 
-                  <div className="space-y-4 text-gray-800 text-lg font-medium">
-                    <p>
-                      <span className="text-green-600 font-semibold">Ratio 100 Error 120:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Ratio100Error120).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="text-green-600 font-semibold">Ratio 100 Error 100:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Ratio100Error100).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="text-green-600 font-semibold">Ratio 100 Error 80:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Ratio100Error80).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="text-blue-600 font-semibold">Phase 100 Error 120:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Phase100Error120).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="text-blue-600 font-semibold">Phase 100 Error 100:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Phase100Error100).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="text-blue-600 font-semibold">Phase 100 Error 80:</span>{' '}
-                      {parseFloat(outputData.predictionResults.Phase100Error80).toFixed(2)}
-                    </p>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-green-50/50 to-transparent opacity-30 rounded-lg"></div>
+
+                    <div className="space-y-5">
+                      <div className="bg-gradient-to-r from-green-50 to-white p-4 rounded-lg shadow-md">
+                        <h3 className="font-bold text-xl text-green-700 mb-2 border-b border-green-100 pb-2">Ratio Errors</h3>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                          <div className="bg-white p-3 rounded-lg border border-green-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-green-900 font-medium">At 120% Load</span>
+                            <span className="text-2xl font-bold text-green-600">
+                              {parseFloat(outputData.predictionResults.Ratio100Error120).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-green-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-green-900 font-medium">At 100% Load</span>
+                            <span className="text-2xl font-bold text-green-600">
+                              {parseFloat(outputData.predictionResults.Ratio100Error100).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-green-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-green-900 font-medium">At 80% Load</span>
+                            <span className="text-2xl font-bold text-green-600">
+                              {parseFloat(outputData.predictionResults.Ratio100Error80).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-lg shadow-md">
+                        <h3 className="font-bold text-xl text-blue-700 mb-2 border-b border-blue-100 pb-2">Phase Errors</h3>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                          <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-blue-900 font-medium">At 120% Load</span>
+                            <span className="text-2xl font-bold text-blue-600">
+                              {parseFloat(outputData.predictionResults.Phase100Error120).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-blue-900 font-medium">At 100% Load</span>
+                            <span className="text-2xl font-bold text-blue-600">
+                              {parseFloat(outputData.predictionResults.Phase100Error100).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm flex flex-col items-center justify-center transform transition-transform hover:scale-105">
+                            <span className="text-sm text-blue-900 font-medium">At 80% Load</span>
+                            <span className="text-2xl font-bold text-blue-600">
+                              {parseFloat(outputData.predictionResults.Phase100Error80).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 text-center">
+                      <p className="text-gray-600 text-sm italic">Values represent predicted error percentages at different loads</p>
+                    </div>
                   </div>
                 </div>
               </div>

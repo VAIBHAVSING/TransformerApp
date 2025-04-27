@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { modelService } from '../services/api';
+import { BarChart3 } from "lucide-react";
 
 const InputCTPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     type: '',
     burden: '',
@@ -28,6 +31,7 @@ const InputCTPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showModel, setShowModel] = useState(false);
   const [modelType, setModelType] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleTypeChange = (e) => {
     setFormData({
@@ -144,10 +148,10 @@ const InputCTPage = () => {
 
   const predictErrors = async () => {
     if (!areFieldsValid()) {
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     const computedOutput = getCTComputedOutput(formData);
     setOutputData({
       coreSize: computedOutput.coreSize,
@@ -160,45 +164,66 @@ const InputCTPage = () => {
       insulationOnPrimary: computedOutput.insulationOnPrimary
     });
     setShowOutput(true);
+    setModelType(formData.type);
+    setShowModel(true);
 
+    // Prepare payload with the right structure expected by the backend
     const payload = {
-      ...formData,
-      ...computedOutput
+      type: formData.type,
+      burden: parseFloat(formData.burden),
+      voltageRating: parseFloat(formData.voltageRating),
+      class: formData.class,
+      ctRatio: formData.ctRatio,
+      stc: parseFloat(formData.stc)
     };
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_Model_API_URL}/predict_ct`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        console.error('Prediction error:', data.error);
-        alert('Failed to fetch predictions.');
-      } else {
+      const result = await modelService.predictCT(payload);
+      
+      if (result.success) {
         setOutputData((prevOutput) => ({
           ...prevOutput,
-          ctPredictionResults: data
+          ctPredictionResults: result.data
         }));
+      } else {
+        console.error('Prediction error:', result.error);
+        
+        // If unauthorized (401), redirect to login
+        if (result.error === 'You are not logged in! Please log in to get access.') {
+          navigate('/login', { state: { from: location.pathname, message: 'Please log in to use the prediction feature' } });
+          return;
+        }
+        
+        // Handle other errors
+        setErrorMessage(result.error || 'Failed to get prediction results');
+        alert('Failed to fetch predictions: ' + (result.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Prediction error:', error);
-      alert('Failed to fetch predictions.');
+      setErrorMessage('Failed to connect to the server');
+      alert('Failed to connect to the server. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
 
   const handlePrintClick = () => {
     if (!areFieldsValid()) return;
-    navigate('/print-page-ct');
-
+    
+    // Make sure all data is saved to localStorage before navigating
+    const computed = getCTComputedOutput(formData);
+    localStorage.setItem('ctOutputData', JSON.stringify({
+      ...formData,
+      voltageRating: parseInt(formData.voltageRating),
+      burden: parseInt(formData.burden),
+      ctRatioNumerator: parseInt(formData.ctRatio.split(':')[0]),
+      ctRatioDenominator: parseInt(formData.ctRatio.split(':')[1]),
+      ...computed
+    }));
+    
+    // Navigate to the correct route defined in App.jsx
+    navigate('/ct-results');
   };
 
   return (
@@ -473,61 +498,157 @@ const InputCTPage = () => {
 
         {/* CT Prediction Results */}
         {outputData.ctPredictionResults && (
-          <div className="w-full md:w-1/2 mt-10">
-            <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 hover:shadow-2xl transition duration-300 ease-in-out">
-              <h2 className="text-3xl font-extrabold mb-6 text-center bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                CT Model Prediction Results
-              </h2>
+          <div className="w-full mt-10">
+            <div className="bg-gradient-to-br from-white to-purple-50 p-8 rounded-2xl shadow-xl border border-purple-100 hover:shadow-2xl transition-all duration-500 ease-in-out">
+              <div className="flex items-center justify-center mb-6">
+                <BarChart3 className="text-purple-600 w-7 h-7 mr-3" />
+                <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-400 bg-clip-text text-transparent">
+                  CT Model Prediction Results
+                </h2>
+              </div>
 
-              <div className="space-y-6 text-gray-800 text-lg font-medium max-h-[500px] overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Ratio 100 Errors */}
-                <div>
-                  <h3 className="text-xl font-bold text-purple-600 mb-2">Ratio 100 Errors</h3>
-                  {["Ratio100Error120", "Ratio100Error100", "Ratio100Error20", "Ratio100Error5", "Ratio100Error1"].map((key) => (
-                    <p key={key}>
-                      <span className="text-purple-500 font-semibold">{key.replace(/([a-z])([A-Z])/g, "$1 $2")}:</span>{' '}
-                      {parseFloat(outputData.ctPredictionResults[key]).toFixed(2)}
-                    </p>
-                  ))}
+                <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl shadow-md">
+                  <div className="flex items-center mb-3">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                    <h3 className="font-bold text-xl text-purple-700">Ratio 100 Errors</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {["Ratio100Error120", "Ratio100Error100", "Ratio100Error20", "Ratio100Error5", "Ratio100Error1"].map((key) => {
+                      const value = parseFloat(outputData.ctPredictionResults[key]).toFixed(2);
+                      const label = key.replace(/Ratio100Error/, '').replace(/([a-z])([A-Z])/g, "$1 $2");
+                      
+                      return (
+                        <div key={key} className="relative">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-purple-900">At {label}% Load</span>
+                            <span className="text-sm font-bold text-purple-800">{value}</span>
+                          </div>
+                          <div className="w-full bg-purple-100 rounded-full h-2">
+                            <div 
+                              className="bg-purple-500 h-2 rounded-full transition-all duration-500" 
+                              style={{ 
+                                width: `${Math.min(Math.abs(parseFloat(value) * 20), 100)}%`,
+                                opacity: Math.min(Math.abs(parseFloat(value) * 0.2 + 0.5), 1)
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Phase 100 Errors */}
-                <div>
-                  <h3 className="text-xl font-bold text-indigo-600 mb-2">Phase 100 Errors</h3>
-                  {["Phase100Error120", "Phase100Error100", "Phase100Error20", "Phase100Error5", "Phase100Error1"].map((key) => (
-                    <p key={key}>
-                      <span className="text-indigo-500 font-semibold">{key.replace(/([a-z])([A-Z])/g, "$1 $2")}:</span>{' '}
-                      {parseFloat(outputData.ctPredictionResults[key]).toFixed(2)}
-                    </p>
-                  ))}
+                <div className="bg-gradient-to-r from-indigo-50 to-white p-6 rounded-xl shadow-md">
+                  <div className="flex items-center mb-3">
+                    <div className="w-3 h-3 bg-indigo-500 rounded-full mr-2"></div>
+                    <h3 className="font-bold text-xl text-indigo-700">Phase 100 Errors</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {["Phase100Error120", "Phase100Error100", "Phase100Error20", "Phase100Error5", "Phase100Error1"].map((key) => {
+                      const value = parseFloat(outputData.ctPredictionResults[key]).toFixed(2);
+                      const label = key.replace(/Phase100Error/, '').replace(/([a-z])([A-Z])/g, "$1 $2");
+                      
+                      return (
+                        <div key={key} className="relative">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-indigo-900">At {label}% Load</span>
+                            <span className="text-sm font-bold text-indigo-800">{value}</span>
+                          </div>
+                          <div className="w-full bg-indigo-100 rounded-full h-2">
+                            <div 
+                              className="bg-indigo-500 h-2 rounded-full transition-all duration-500" 
+                              style={{ 
+                                width: `${Math.min(Math.abs(parseFloat(value) * 20), 100)}%`,
+                                opacity: Math.min(Math.abs(parseFloat(value) * 0.2 + 0.5), 1)
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-
+                
                 {/* Ratio 25 Errors */}
-                <div>
-                  <h3 className="text-xl font-bold text-pink-600 mb-2">Ratio 25 Errors</h3>
-                  {["Ratio25Error120", "Ratio25Error100", "Ratio25Error20", "Ratio25Error5", "Ratio25Error1"].map((key) => (
-                    <p key={key}>
-                      <span className="text-pink-500 font-semibold">{key.replace(/([a-z])([A-Z])/g, "$1 $2")}:</span>{' '}
-                      {parseFloat(outputData.ctPredictionResults[key]).toFixed(2)}
-                    </p>
-                  ))}
+                <div className="bg-gradient-to-r from-pink-50 to-white p-6 rounded-xl shadow-md">
+                  <div className="flex items-center mb-3">
+                    <div className="w-3 h-3 bg-pink-500 rounded-full mr-2"></div>
+                    <h3 className="font-bold text-xl text-pink-700">Ratio 25 Errors</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {["Ratio25Error120", "Ratio25Error100", "Ratio25Error20", "Ratio25Error5", "Ratio25Error1"].map((key) => {
+                      const value = parseFloat(outputData.ctPredictionResults[key]).toFixed(2);
+                      const label = key.replace(/Ratio25Error/, '').replace(/([a-z])([A-Z])/g, "$1 $2");
+                      
+                      return (
+                        <div key={key} className="relative">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-pink-900">At {label}% Load</span>
+                            <span className="text-sm font-bold text-pink-800">{value}</span>
+                          </div>
+                          <div className="w-full bg-pink-100 rounded-full h-2">
+                            <div 
+                              className="bg-pink-500 h-2 rounded-full transition-all duration-500" 
+                              style={{ 
+                                width: `${Math.min(Math.abs(parseFloat(value) * 20), 100)}%`,
+                                opacity: Math.min(Math.abs(parseFloat(value) * 0.2 + 0.5), 1)
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Phase 25 Errors */}
-                <div>
-                  <h3 className="text-xl font-bold text-teal-600 mb-2">Phase 25 Errors</h3>
-                  {["Phase25Error120", "Phase25Error100", "Phase25Error20", "Phase25Error5", "Phase25Error1"].map((key) => (
-                    <p key={key}>
-                      <span className="text-teal-500 font-semibold">{key.replace(/([a-z])([A-Z])/g, "$1 $2")}:</span>{' '}
-                      {parseFloat(outputData.ctPredictionResults[key]).toFixed(2)}
-                    </p>
-                  ))}
+                <div className="bg-gradient-to-r from-teal-50 to-white p-6 rounded-xl shadow-md">
+                  <div className="flex items-center mb-3">
+                    <div className="w-3 h-3 bg-teal-500 rounded-full mr-2"></div>
+                    <h3 className="font-bold text-xl text-teal-700">Phase 25 Errors</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {["Phase25Error120", "Phase25Error100", "Phase25Error20", "Phase25Error5", "Phase25Error1"].map((key) => {
+                      const value = parseFloat(outputData.ctPredictionResults[key]).toFixed(2);
+                      const label = key.replace(/Phase25Error/, '').replace(/([a-z])([A-Z])/g, "$1 $2");
+                      
+                      return (
+                        <div key={key} className="relative">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-teal-900">At {label}% Load</span>
+                            <span className="text-sm font-bold text-teal-800">{value}</span>
+                          </div>
+                          <div className="w-full bg-teal-100 rounded-full h-2">
+                            <div 
+                              className="bg-teal-500 h-2 rounded-full transition-all duration-500" 
+                              style={{ 
+                                width: `${Math.min(Math.abs(parseFloat(value) * 20), 100)}%`,
+                                opacity: Math.min(Math.abs(parseFloat(value) * 0.2 + 0.5), 1)
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <p className="text-gray-600 text-sm italic">
+                  Values represent predicted error percentages at different loads
+                </p>
               </div>
             </div>
           </div>
         )}
-
 
       </div>
     </div>

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance with credentials support
 const api = axios.create({
@@ -99,6 +99,41 @@ export const authService = {
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to reset password'
+      };
+    }
+  }
+};
+
+// Model prediction services
+export const modelService = {
+  // PT model prediction
+  predictPT: async (payload) => {
+    try {
+      const response = await api.post('/model/predict', payload);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to get prediction results'
+      };
+    }
+  },
+
+  // CT model prediction
+  predictCT: async (payload) => {
+    try {
+      const response = await api.post('/model/predict_ct', payload);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to get CT prediction results'
       };
     }
   }

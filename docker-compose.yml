@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./Frontend/backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: transformer-backend
     ports:
@@ -12,21 +12,40 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - MONGODB_URI=mongodb://mongo:27017/transformerApp
+      - MODEL_API_URL=http://model:5001
     depends_on:
       - mongo
+      - model
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  model:
+    build:
+      context: ./Model
+      dockerfile: Dockerfile
+    container_name: transformer-model
+    ports:
+      - "5001:5000"
+    environment:
+      - CORS_ORIGIN=http://localhost,http://localhost:80,http://frontend:80
     restart: unless-stopped
     networks:
       - app-network
 
   frontend:
     build:
-      context: ./Frontend
+      context: .
       dockerfile: Dockerfile
     container_name: transformer-frontend
     ports:
       - "80:80"
+    environment:
+      - VITE_API_URL=http://backend:5000/api
+      - VITE_Model_API_URL=http://model:5001
     depends_on:
       - backend
+      - model
     restart: unless-stopped
     networks:
       - app-network
