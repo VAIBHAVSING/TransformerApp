@@ -7,9 +7,12 @@ import os
 # Initialize the Flask app
 app = Flask(__name__)
 
-# Enhanced CORS configuration - allow all origins
+# Get allowed origins from environment variable or use default
+cors_origins = os.environ.get('CORS_ORIGIN', 'http://localhost:5173,http://localhost:3000').split(',')
+
+# Enhanced CORS configuration with specific allowed origins
 CORS(app, resources={r"/*": {
-    "origins": "*", 
+    "origins": cors_origins, 
     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     "supports_credentials": True
