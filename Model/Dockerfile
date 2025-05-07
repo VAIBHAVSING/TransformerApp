@@ -29,15 +29,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=app.py \
     FLASK_ENV=production \
-    CORS_ORIGIN=* \
-    GUNICORN_WORKERS=4 \
-    GUNICORN_THREADS=2
+    CORS_ORIGIN=*
 
 WORKDIR /app
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tini \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy wheels from build stage and install
@@ -58,10 +57,10 @@ EXPOSE 5000
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1
 
 # Use tini as init system
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Use gunicorn as the production WSGI server
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "${GUNICORN_WORKERS}", "--threads", "${GUNICORN_THREADS}", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
+# Use gunicorn with hardcoded values for workers and threads
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
