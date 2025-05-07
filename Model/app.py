@@ -18,6 +18,11 @@ CORS(app, resources={r"/*": {
     "supports_credentials": True
 }})
 
+# Add a health check endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy", "message": "Model API is running"}), 200
+
 # Load the pre-trained model
 pt_model = joblib.load('pt_error_predictor.pkl')
 ct_model = joblib.load("ct_error_predictor_model_all_outputs.joblib")

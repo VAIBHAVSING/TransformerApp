@@ -21,23 +21,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements
 # Final stage
 FROM python:3.10-slim
 
-# Create a non-root user and group
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_APP=app.py \
-    FLASK_ENV=production \
-    CORS_ORIGIN=*
-
 WORKDIR /app
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    tini \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy wheels from build stage and install
 COPY --from=build /build/wheels /wheels
@@ -46,21 +30,25 @@ RUN pip install --no-cache-dir /wheels/* gunicorn==21.2.0
 # Copy the application code
 COPY . .
 
-# Change ownership of the application code
-RUN chown -R appuser:appuser /app
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app.py \
+    FLASK_ENV=production \
+    CORS_ORIGIN=* \
+    PORT=8080
 
-# Switch to non-root user
-USER appuser
+# Expose the port - serverless platforms often use 8080
+EXPOSE ${PORT}
 
-# Expose the port
-EXPOSE 5000
-
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1
-
-# Use tini as init system
-ENTRYPOINT ["/usr/bin/tini", "--"]
-
-# Use gunicorn with hardcoded values for workers and threads
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
+# Use a more serverless-friendly startup command
+# The PORT variable is automatically set by many serverless platforms
+# Use fewer workers but more threads for better cold start performance
+CMD exec gunicorn --bind 0.0.0.0:${PORT:-8080} \
+    --workers 1 \
+    --threads 8 \
+    --timeout 0 \
+    --preload \
+    --access-logfile - \
+    --error-logfile - \
+    app:app
