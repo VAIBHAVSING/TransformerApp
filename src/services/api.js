@@ -109,7 +109,7 @@ export const modelService = {
   // PT model prediction
   predictPT: async (payload) => {
     try {
-      const response = await api.post('/model/predict', payload);
+      const response = await api.post('/model/predict_pt', payload);
       return {
         success: true,
         data: response.data

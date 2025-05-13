@@ -151,7 +151,13 @@ const InputPTPage = () => {
       numOfLayers: numOfLayersStr
     });
 
-    // Prepare payload for API
+    // Calculate the numeric values
+    const crossSectionValue = (Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100);
+    const wireLengthValue = wirelength;
+    const insulationOnCoreValue = (Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100);
+    const numOfLayersValue = numOfLayers;
+    
+    // Prepare payload for API with string values
     const payload = {
       formData: {
         type: formData.type,
@@ -160,10 +166,10 @@ const InputPTPage = () => {
         stc: formData.stc
       },
       outputData: {
-        crossSection: (Math.round(((crossection + Number.EPSILON) + 1) * 100) / 100),
-        wireLength: wirelength,
-        insulationOnCore: (Math.round(((insulationOnCore + Number.EPSILON) + 1) * 100) / 100),
-        numOfLayers: numOfLayers
+        crossSection: String(crossSectionValue),
+        wireLength: String(wireLengthValue),
+        insulationOnCore: String(insulationOnCoreValue),
+        numOfLayers: String(numOfLayersValue)
       }
     };
 

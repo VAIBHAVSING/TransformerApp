@@ -68,6 +68,18 @@ app.post('/api/model/predict_ct', protect, async (req, res) => {
   }
 });
 
+app.post('/api/model/predict_pt', protect, async (req, res) => {
+  try {
+    const response = await axios.post(`${MODEL_API_URL}/predict`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error calling CT model API:', error.message);
+    res.status(error.response?.status || 500).json({
+      status: 'error',
+      message: error.response?.data?.error || 'Error processing CT prediction request'
+    });
+  }
+});
 // Health check route
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
