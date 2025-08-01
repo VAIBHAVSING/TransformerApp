@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -88,8 +89,6 @@ const InputCTPage = () => {
       ...computed
     }));
   };
-
-
 
   const getCTComputedOutput = (formData) => {
     const burden = parseInt(formData.burden);
@@ -207,7 +206,6 @@ const InputCTPage = () => {
     }
   };
 
-
   const handlePrintClick = () => {
     if (!areFieldsValid()) return;
     
@@ -230,18 +228,18 @@ const InputCTPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar isLoggedIn={true} />
 
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 sm:py-8 px-4">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-8 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">
             <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
               Inputs for Current Transformer
             </span>
           </h2>
         </div>
 
-        <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
-          <div className="mb-8">
-            <div className="flex gap-6">
+        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
               <div className="flex items-center">
                 <input
                   type="radio"
@@ -251,9 +249,9 @@ const InputCTPage = () => {
                   required
                   checked={formData.type === "Oil Cooled"}
                   onChange={handleTypeChange}
-                  className="mr-2 h-5 w-5 accent-green-600"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 accent-green-600"
                 />
-                <label htmlFor="t1" className="text-lg">Oil Cooled</label>
+                <label htmlFor="t1" className="text-base sm:text-lg">Oil Cooled</label>
               </div>
 
               <div className="flex items-center">
@@ -265,128 +263,130 @@ const InputCTPage = () => {
                   required
                   checked={formData.type === "Epoxy/Dry"}
                   onChange={handleTypeChange}
-                  className="mr-2 h-5 w-5 accent-green-600"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 accent-green-600"
                 />
-                <label htmlFor="t2" className="text-lg">Epoxy/Dry</label>
+                <label htmlFor="t2" className="text-base sm:text-lg">Epoxy/Dry</label>
               </div>
             </div>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="burden" className="block text-lg font-medium mb-2">
-              Burden
-            </label>
-            <select
-              name="burden"
-              id="burden"
-              value={formData.burden}
-              onChange={handleInputChange}
-              required
-              className="w-full md:w-64 h-12 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">--Select--</option>
-              <option value="10">10 VA</option>
-              <option value="15">15 VA</option>
-              <option value="20">20 VA</option>
-              <option value="30">30 VA</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="mb-4 sm:mb-6">
+              <label htmlFor="burden" className="block text-base sm:text-lg font-medium mb-2">
+                Burden
+              </label>
+              <select
+                name="burden"
+                id="burden"
+                value={formData.burden}
+                onChange={handleInputChange}
+                required
+                className="w-full h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">--Select--</option>
+                <option value="10">10 VA</option>
+                <option value="15">15 VA</option>
+                <option value="20">20 VA</option>
+                <option value="30">30 VA</option>
+              </select>
+            </div>
+
+            <div className="mb-4 sm:mb-6">
+              <label htmlFor="voltageRating" className="block text-base sm:text-lg font-medium mb-2">
+                Voltage Rating
+              </label>
+              <select
+                name="voltageRating"
+                id="voltageRating"
+                value={formData.voltageRating}
+                onChange={handleInputChange}
+                required
+                className="w-full h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">--Select--</option>
+                <option value="11">11 kV</option>
+                <option value="22">22 kV</option>
+                <option value="33">33 kV</option>
+              </select>
+            </div>
+
+            <div className="mb-4 sm:mb-6">
+              <label htmlFor="class" className="block text-base sm:text-lg font-medium mb-2">
+                Class
+              </label>
+              <select
+                name="class"
+                id="class"
+                value={formData.class}
+                onChange={handleInputChange}
+                required
+                className="w-full h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">--Select--</option>
+                <option value="0.1">0.1</option>
+                <option value="0.2">0.2</option>
+                <option value="0.3">0.3</option>
+                <option value="1">1</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="0.2S">0.2S</option>
+                <option value="0.5S">0.5S</option>
+              </select>
+            </div>
+
+            <div className="mb-4 sm:mb-6">
+              <label htmlFor="ctRatio" className="block text-base sm:text-lg font-medium mb-2">
+                Current Voltage Ratio
+              </label>
+              <select
+                name="ctRatio"
+                id="ctRatio"
+                value={formData.ctRatio}
+                onChange={handleInputChange}
+                required
+                className="w-full h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">--Select--</option>
+                <option value="10:5">10:5</option>
+                <option value="15:5">15:5</option>
+                <option value="20:5">20:5</option>
+                <option value="25:5">25:5</option>
+                <option value="30:5">30:5</option>
+                <option value="40:5">40:5</option>
+                <option value="50:5">50:5</option>
+                <option value="75:5">75:5</option>
+                <option value="100:5">100:5</option>
+                <option value="125:5">125:5</option>
+                <option value="150:5">150:5</option>
+              </select>
+            </div>
+
+            <div className="mb-4 sm:mb-6 sm:col-span-2">
+              <label htmlFor="stc" className="block text-base sm:text-lg font-medium mb-2">
+                Short Time Current
+              </label>
+              <select
+                name="stc"
+                id="stc"
+                value={formData.stc}
+                onChange={handleInputChange}
+                required
+                className="w-full sm:w-80 h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">--Select--</option>
+                <option value="3">3 kA/sec</option>
+                <option value="6.7">6.7 kA/sec</option>
+                <option value="13.1">13.1 kA/sec</option>
+                <option value="26.2">26.2 kA/sec</option>
+                <option value="31.1">31.1 kA/sec</option>
+              </select>
+            </div>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="voltageRating" className="block text-lg font-medium mb-2">
-              Voltage Rating
-            </label>
-            <select
-              name="voltageRating"
-              id="voltageRating"
-              value={formData.voltageRating}
-              onChange={handleInputChange}
-              required
-              className="w-full md:w-64 h-12 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">--Select--</option>
-              <option value="11">11 kV</option>
-              <option value="22">22 kV</option>
-              <option value="33">33 kV</option>
-            </select>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="class" className="block text-lg font-medium mb-2">
-              Class
-            </label>
-            <select
-              name="class"
-              id="class"
-              value={formData.class}
-              onChange={handleInputChange}
-              required
-              className="w-full md:w-64 h-12 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">--Select--</option>
-              <option value="0.1">0.1</option>
-              <option value="0.2">0.2</option>
-              <option value="0.3">0.3</option>
-              <option value="1">1</option>
-              <option value="3">3</option>
-              <option value="5">5</option>
-              <option value="0.2S">0.2S</option>
-              <option value="0.5S">0.5S</option>
-            </select>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="ctRatio" className="block text-lg font-medium mb-2">
-              Current Voltage Ratio
-            </label>
-            <select
-              name="ctRatio"
-              id="ctRatio"
-              value={formData.ctRatio}
-              onChange={handleInputChange}
-              required
-              className="w-full md:w-64 h-12 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">--Select--</option>
-              <option value="10:5">10:5</option>
-              <option value="15:5">15:5</option>
-              <option value="20:5">20:5</option>
-              <option value="25:5">25:5</option>
-              <option value="30:5">30:5</option>
-              <option value="40:5">40:5</option>
-              <option value="50:5">50:5</option>
-              <option value="75:5">75:5</option>
-              <option value="100:5">100:5</option>
-              <option value="125:5">125:5</option>
-              <option value="150:5">150:5</option>
-            </select>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="stc" className="block text-lg font-medium mb-2">
-              Short Time Current
-            </label>
-            <select
-              name="stc"
-              id="stc"
-              value={formData.stc}
-              onChange={handleInputChange}
-              required
-              className="w-full md:w-64 h-12 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">--Select--</option>
-              <option value="3">3 kA/sec</option>
-              <option value="6.7">6.7 kA/sec</option>
-              <option value="13.1">13.1 kA/sec</option>
-              <option value="26.2">26.2 kA/sec</option>
-              <option value="31.1">31.1 kA/sec</option>
-            </select>
-          </div>
-
-          <div className="flex gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
             <Link
               to="/dashboard"
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 hover:scale-105 transition-all duration-300"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 hover:scale-105 transition-all duration-300 text-center text-sm sm:text-base"
             >
               Back
             </Link>
@@ -394,17 +394,17 @@ const InputCTPage = () => {
             <button
               type="button"
               onClick={calculateForCT}
-              className="px-6 py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300"
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300 text-sm sm:text-base"
             >
               Compute
             </button>
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 sm:mt-6 text-center">
           <button
             id="open-page-btn"
-            className="px-6 py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300"
+            className="px-4 sm:px-6 py-2 sm:py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300 text-sm sm:text-base"
             onClick={predictErrors}
           >
             Predict Errors
@@ -413,36 +413,36 @@ const InputCTPage = () => {
 
         {isLoading && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-5 rounded-lg">
-              <p className="text-xl">Running the model...</p>
+            <div className="bg-white p-4 sm:p-5 rounded-lg mx-4">
+              <p className="text-lg sm:text-xl">Running the model...</p>
             </div>
           </div>
         )}
 
         {showOutput && (
-          <div className="flex flex-col md:flex-row gap-6 mt-10">
-            <div className="w-full md:w-1/2">
-              <div className="bg-white p-8 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold mb-4 text-center">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 mt-6 sm:mt-10">
+            <div className="w-full lg:w-1/2">
+              <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md">
+                <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">
                   <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
                     Output for Current Transformer
                   </span>
                 </h2>
 
-                <div className="space-y-4">
-                  <p className="text-lg">{outputData.coreSize}</p>
-                  <p className="text-lg">{outputData.insulationOnCore}</p>
-                  <p className="text-lg">{outputData.crossSectionForPrimary}</p>
-                  <p className="text-lg">{outputData.n1}</p>
-                  <p className="text-lg">{outputData.crossSectionForSecondary}</p>
-                  <p className="text-lg">{outputData.n2}</p>
-                  <p className="text-lg">{outputData.lengthOfPrimary}</p>
-                  <p className="text-lg">{outputData.insulationOnPrimary}</p>
+                <div className="space-y-3 sm:space-y-4">
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.coreSize}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.insulationOnCore}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.crossSectionForPrimary}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.n1}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.crossSectionForSecondary}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.n2}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.lengthOfPrimary}</p>
+                  <p className="text-sm sm:text-base lg:text-lg break-words">{outputData.insulationOnPrimary}</p>
 
-                  <div className="mt-6 text-center">
+                  <div className="mt-4 sm:mt-6 text-center">
                     <button
                       onClick={handlePrintClick}
-                      className="px-6 py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300"
+                      className="px-4 sm:px-6 py-2 sm:py-3 rounded bg-gradient-to-t from-green-700 to-green-500 text-white font-bold hover:scale-105 transition-all duration-300 text-sm sm:text-base"
                     >
                       Print
                     </button>
@@ -452,9 +452,9 @@ const InputCTPage = () => {
             </div>
 
             {showModel && (
-              <div className="w-full md:w-1/2">
-                <div className="bg-white p-8 rounded-lg shadow-md">
-                  <h2 className="text-2xl font-bold mb-4 text-center">
+              <div className="w-full lg:w-1/2">
+                <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md">
+                  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center">
                     <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
                       3D Model - {modelType === 'Oil Cooled' ? 'oil cooled' : 'epoxy dry'}
                     </span>
@@ -464,7 +464,8 @@ const InputCTPage = () => {
                     <iframe
                       title={modelType === 'Oil Cooled' ? 'Oil Cooled with Dimensions' : 'Epoxy Transformer with Dimensions'}
                       width="100%"
-                      height="500"
+                      height="400"
+                      className="sm:h-[500px]"
                       frameBorder="0"
                       allowFullScreen
                       mozallowfullscreen="true"
@@ -476,7 +477,7 @@ const InputCTPage = () => {
                         : "https://sketchfab.com/models/2d1e67715d15453996afa9cbea8ff6f5/embed"
                       }
                     />
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-2">
                       <a
                         href={modelType === 'Oil Cooled'
                           ? "https://sketchfab.com/3d-models/oil-cooled-with-dimensions-24bdbf43519840f691e3ace4fae233f5"
@@ -498,21 +499,21 @@ const InputCTPage = () => {
 
         {/* CT Prediction Results */}
         {outputData.ctPredictionResults && (
-          <div className="w-full mt-10">
-            <div className="bg-gradient-to-br from-white to-purple-50 p-8 rounded-2xl shadow-xl border border-purple-100 hover:shadow-2xl transition-all duration-500 ease-in-out">
-              <div className="flex items-center justify-center mb-6">
-                <BarChart3 className="text-purple-600 w-7 h-7 mr-3" />
-                <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-400 bg-clip-text text-transparent">
+          <div className="w-full mt-6 sm:mt-10">
+            <div className="bg-gradient-to-br from-white to-purple-50 p-4 sm:p-6 lg:p-8 rounded-2xl shadow-xl border border-purple-100 hover:shadow-2xl transition-all duration-500 ease-in-out">
+              <div className="flex items-center justify-center mb-4 sm:mb-6">
+                <BarChart3 className="text-purple-600 w-6 h-6 sm:w-7 sm:h-7 mr-2 sm:mr-3" />
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-400 bg-clip-text text-transparent text-center">
                   CT Model Prediction Results
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Ratio 100 Errors */}
-                <div className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-xl shadow-md">
+                <div className="bg-gradient-to-r from-purple-50 to-white p-4 sm:p-6 rounded-xl shadow-md">
                   <div className="flex items-center mb-3">
                     <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                    <h3 className="font-bold text-xl text-purple-700">Ratio 100 Errors</h3>
+                    <h3 className="font-bold text-lg sm:text-xl text-purple-700">Ratio 100 Errors</h3>
                   </div>
                   
                   <div className="space-y-3">
@@ -523,8 +524,8 @@ const InputCTPage = () => {
                       return (
                         <div key={key} className="relative">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-purple-900">At {label}% Load</span>
-                            <span className="text-sm font-bold text-purple-800">{value}</span>
+                            <span className="text-xs sm:text-sm font-medium text-purple-900">At {label}% Load</span>
+                            <span className="text-xs sm:text-sm font-bold text-purple-800">{value}</span>
                           </div>
                           <div className="w-full bg-purple-100 rounded-full h-2">
                             <div 
@@ -542,10 +543,10 @@ const InputCTPage = () => {
                 </div>
 
                 {/* Phase 100 Errors */}
-                <div className="bg-gradient-to-r from-indigo-50 to-white p-6 rounded-xl shadow-md">
+                <div className="bg-gradient-to-r from-indigo-50 to-white p-4 sm:p-6 rounded-xl shadow-md">
                   <div className="flex items-center mb-3">
                     <div className="w-3 h-3 bg-indigo-500 rounded-full mr-2"></div>
-                    <h3 className="font-bold text-xl text-indigo-700">Phase 100 Errors</h3>
+                    <h3 className="font-bold text-lg sm:text-xl text-indigo-700">Phase 100 Errors</h3>
                   </div>
                   
                   <div className="space-y-3">
@@ -556,8 +557,8 @@ const InputCTPage = () => {
                       return (
                         <div key={key} className="relative">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-indigo-900">At {label}% Load</span>
-                            <span className="text-sm font-bold text-indigo-800">{value}</span>
+                            <span className="text-xs sm:text-sm font-medium text-indigo-900">At {label}% Load</span>
+                            <span className="text-xs sm:text-sm font-bold text-indigo-800">{value}</span>
                           </div>
                           <div className="w-full bg-indigo-100 rounded-full h-2">
                             <div 
