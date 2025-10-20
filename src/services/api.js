@@ -131,9 +131,10 @@ export const modelService = {
         data: response.data
       };
     } catch (error) {
+      console.error('CT Prediction API Error:', error.response?.data);
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to get CT prediction results'
+        error: error.response?.data?.error || error.response?.data?.message || 'Failed to get CT prediction results'
       };
     }
   }

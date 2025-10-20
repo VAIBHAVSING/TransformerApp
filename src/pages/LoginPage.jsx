@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../App';
 
@@ -25,12 +26,10 @@ const LoginPage = () => {
     }
     
     try {
-      // Show loading toast
       const loadingToastId = toast.loading("Logging in...");
       
       const result = await login({ email, password });
       
-      // Dismiss the loading toast
       toast.dismiss(loadingToastId);
       
       if (result.success) {
@@ -50,92 +49,135 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
       <Navbar isLoggedIn={false} showSignOut={false} />
       
-      <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-center py-12">
-        <div className="md:w-1/2 mb-10 md:mb-0 flex justify-center">
-          <div className="w-4/5">
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img 
-                id="LoginSignUpImage" 
-                src="/LoginSignUpImage.png" 
-                alt="Login" 
-                className="w-full h-auto"
-              />
-            </div>
-          </div>
+      <div className="relative min-h-screen w-full flex items-center overflow-hidden pt-20">
+        {/* Animated Background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style={{ animationDelay: '2s' }}></div>
         </div>
 
-        <div className="md:w-1/2">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">Login</h2>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md">
-              <div className="mb-6">
-                <label 
-                  htmlFor="email" 
-                  className="block text-gray-700 font-semibold mb-2"
-                >
-                  Email:
-                </label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-              
-              <div className="mb-6">
-                <label 
-                  htmlFor="password" 
-                  className="block text-gray-700 font-semibold mb-2"
-                >
-                  Password:
-                </label>
-                <input 
-                  type="password" 
-                  id="password" 
-                  name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <div className="text-right mt-2">
-                  <Link to="/forgot-password" className="text-sm text-green-600 hover:underline">
-                    Forgot password?
-                  </Link>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
+            {/* Left Side - Image */}
+            <div className="hidden lg:block animate-float">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-accent-400 rounded-3xl blur-[100px] opacity-20"></div>
+                <div className="relative glass rounded-3xl overflow-hidden p-8 lg:p-12 shadow-2xl">
+                  <img 
+                    src="/LoginSignUpImage.png" 
+                    alt="Login" 
+                    className="w-full h-auto rounded-2xl transform hover:scale-105 transition-transform duration-700"
+                  />
                 </div>
               </div>
-              
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full py-3 bg-gradient-to-t from-green-700 to-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300 disabled:opacity-50"
-              >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </button>
-              
-              <div className="mt-4 text-center">
-                <p className="text-gray-600">
-                  Don't have an account? 
-                  <Link to="/register" className="text-green-600 ml-1 hover:underline">
-                    Register here
+            </div>
+
+            {/* Right Side - Login Form */}
+            <div className="animate-slide-up">
+              <div className="max-w-md mx-auto lg:mx-0 lg:ml-auto">
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-sm border border-primary-200 rounded-full shadow-sm mb-8">
+                  <Sparkles className="w-5 h-5 text-primary-600 animate-pulse" />
+                  <span className="text-sm font-semibold text-primary-700">Welcome Back</span>
+                </div>
+
+                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-4 leading-tight">
+                  <span className="gradient-text drop-shadow-sm">Sign In</span>
+                </h2>
+                <p className="text-gray-600 mb-8 text-lg">Enter your credentials to access your account</p>
+
+                  {error && (
+                  <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6 animate-shake">
+                    <p className="font-medium">{error}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input 
+                        type="email" 
+                        id="email" 
+                        name="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder="you@example.com"
+                        className="input-field pl-12"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="••••••••"
+                        className="input-field pl-12"
+                      />
+                    </div>
+                    <div className="text-right mt-2">
+                      <Link to="/forgot-password" className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                        Forgot password?
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full btn-primary flex items-center justify-center gap-2 text-lg py-4"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Logging in...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                  
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white text-gray-500">Don't have an account?</span>
+                    </div>
+                  </div>
+
+                  <Link 
+                    to="/register" 
+                    className="w-full btn-secondary flex items-center justify-center gap-2 text-lg py-4"
+                  >
+                    Create Account
                   </Link>
-                </p>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
