@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.10-slim AS build
+FROM python:3.9-slim AS build
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,9 +19,14 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
 
 # Final stage
-FROM python:3.10-slim
+FROM python:3.9-slim
 
 WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy wheels from build stage and install
 COPY --from=build /build/wheels /wheels

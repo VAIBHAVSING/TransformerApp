@@ -39,7 +39,7 @@ const PrintPagePT = () => {
       <div className="container mx-auto py-8 px-4">
         <div className="text-center print:hidden">
           <h2 className="text-3xl font-bold mb-8 text-center">
-            <span className="bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
+            <span className="gradient-text">
               Potential Transformer Output
             </span>
           </h2>
@@ -113,17 +113,17 @@ const PrintPagePT = () => {
             {!isPrinted ? (
               <button
                 onClick={handlePrint}
-                className="px-6 py-3 rounded bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+                className="btn-primary"
               >
                 Print Document
               </button>
             ) : (
-              <p className="text-green-600 font-medium">Document printed successfully!</p>
+              <p className="text-primary-600 font-medium">Document printed successfully!</p>
             )}
             
             <Link
               to="/input-pt"
-              className="px-6 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors"
+              className="btn-secondary"
             >
               Back to Inputs
             </Link>

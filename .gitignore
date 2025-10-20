@@ -27,3 +27,7 @@ dist-ssr
 .env
 **/.env
 **/backend/.env
+
+# Virtual environments
+venv/
+Model/venv/

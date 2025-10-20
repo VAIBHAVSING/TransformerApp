@@ -158,13 +158,13 @@ const PrintPageCT = () => {
         <div className="flex justify-center mt-8 print:hidden">
           <button 
             onClick={handlePrint}
-            className="px-6 py-2 bg-gradient-to-t from-green-700 to-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300"
+            className="btn-primary"
           >
             Print
           </button>
           <Link
             to="/dashboard"
-            className="ml-4 px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition duration-300"
+            className="ml-4 btn-secondary"
           >
             Back to Dashboard
           </Link>

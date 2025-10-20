@@ -1,8 +1,7 @@
 {
-  "name": "frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "transformer-app",
+  "version": "1.0.0",
+  "description": "Full-stack transformer application",
   "scripts": {
     "dev": "vite",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:backend\"",
